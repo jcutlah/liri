@@ -1,4 +1,5 @@
 require("dotenv").config();
+var fs = require('fs');
 var keys = require('./keys.js');
 var inquirer = require('inquirer');
 var axios = require('axios');
@@ -44,44 +45,72 @@ function bandsInTown(band){
         console.log("Hmm, I didn't understand that. Try a different search maybe?");
     }).finally(function () {
         // always executed
+        reinitPrompt();
     });
 }
 function movie(movie){
     console.log('running movie()');
     axios.get(`http://www.omdbapi.com/?apikey=${omdbKey}&t=${movie}`).then(function(response){
-        console.log(response);
+        // console.log(response);
+        let movieInfo = response.data;
+        console.log(movieInfo.Title);
+        console.log("Year released: " + movieInfo.Year);
+        console.log("     " + movieInfo.Plot);
     }).catch(function(err){
         console.log(err);
+    }).finally(function(){
+        reinitPrompt();
     });
 }
 function randomLiri(){
     console.log('running randomLiri()');
+    let liriFaveList = fs.readFile('./random.txt', {encoding: 'utf-8'}, (err,data) => {
+        if (err) throw err;
+        let liriFaves = data.split(',');
+        let randoFave = liriFaves[Math.floor(Math.random() * liriFaves.length)];
+        console.log(randoFave);
+        let command = cleanSpaces(randoFave.split(':')[0]);
+        let search = cleanSpaces(randoFave.split(':')[1]);
+        console.log(`###${command}###`);
+        searchEngine(command, search);
+    });
+}
+function cleanSpaces(string){
+    let leadingSpace = /^\s+/;
+    let trailingSpace = /\s+$/;
+    console.log(`cleaning spaces for ${string}`);
+    let cleanString = string.replace(leadingSpace,'').replace(trailingSpace,'');
+    console.log(cleanString);
+    return cleanString;
 }
 function spotifyThis(song){
     console.log('Searching Spotify for ' + song + '...');
     var spotify = new Spotify(keys.spotify);
     spotify.search({ 
         type: 'track', 
-        query: song 
+        query: song,
+        limit: 5
     }).then(function(response) {
         var songs = response.tracks.items;
         // console.log(songs);
-        if (songs.length <= 20){
+        if (songs.length <= 4){
             console.log("I found " + songs.length + " potential matches for '"+song+"'.")
         } else {
             console.log("Here are the first 20 matches I found for that search.")
         }
         for(i=0;i<songs.length;i++){
             console.log(' ');
-            console.log('Song: ' + songs[0].name);
-            console.log('Artist: ' + songs[0].artists[0].name);
-            console.log('Album: ' + songs[0].album.name);
-            console.log('Open in Spotify: ' + songs[0].external_urls.spotify);
+            console.log('Song: ' + songs[i].name);
+            console.log('Artist: ' + songs[i].artists[0].name);
+            console.log('Album: ' + songs[i].album.name);
+            console.log('Open in Spotify: ' + songs[i].external_urls.spotify);
             console.log("---------------------------------------------------------")
         }
     }).catch(function(err){
         console.log(err);
         console.log(`I'm sorry, ${song} doesn't look like anything to me.`);
+    }).finally(function(){
+        reinitPrompt();
     });
 }
 function getSearchTerm(command){
@@ -93,24 +122,12 @@ function getSearchTerm(command){
     }]).then(answers => {
         // console.log(answers.term);
         let term = answers.term;
-        switch(command){
-            case 'band':
-                bandsInTown(term)
-                break;
-            case 'song':
-                spotifyThis(term)
-                break;
-            case 'movie':
-                movie(term)
-                break;
-            case 'random':
-                randomLiri()
-                break;
-        }
-
+        searchEngine(command, term);
     });
 }
 function initPrompt(){
+    console.log('');
+    console.log('');
     inquirer.prompt([
         {
             type: 'list',
@@ -138,9 +155,44 @@ function initPrompt(){
     ]).then(answers => {
         // console.log(JSON.stringify(answers, null, '  '));
         command = answers.command;
+        if (command === "random"){
+            randomLiri();
+        } else {
+            getSearchTerm(command);
+        }
         // console.log(command);
-        getSearchTerm(command);
+        
       });
+}
+function reinitPrompt(){
+    console.log('');
+    inquirer.prompt([
+        {
+            type: 'confirm',
+            name: 'reinit',
+            message: 'Anything else you\'d like to search for?',
+            
+        }
+    ]).then(answers => {
+        if (answers.reinit){
+            initPrompt()
+        } else {
+            console.log("Thank you, have a nice day.");
+        }
+    })
+}
+function searchEngine(command, term){
+    switch(command){
+        case 'band':
+            bandsInTown(term)
+            break;
+        case 'song':
+            spotifyThis(term)
+            break;
+        case 'movie':
+            movie(term)
+            break;
+    }
 }
 initPrompt();
 
