@@ -8,14 +8,6 @@ This app is initiated from the command line. When the app is run, the user is pr
 ![Liri search choices](images/searchOptions.png)
 After the search results are returned, Liri checks to see if the user would like to run an additional search. This will continue indefinitely until the user declines to have Liri do another search.
 ![Search again?](images/searchAgain.png)
-#### Movie results: 
-![Movie results](images/movieResults.png)
-#### Song results:
-![Song results](images/songResults.png)
-#### Concert results:
-![Concert results](images/concertResults.png)
-#### Liri favorites result:
-![Liri favorites result](images/liriFavorites.png)
 
 ### How to use
 
@@ -45,3 +37,15 @@ After the search results are returned, Liri checks to see if the user would like
 
 ### Development
 This application was developed solely by James Cutler, according to instructions/specifications provided by the UNH Coding Bootcamp. 
+
+### Preview
+#### Movie results: 
+![Movie results](images/movieResults.png)
+#### Song results:
+![Song results](images/songResults.png)
+#### Concert results:
+![Concert results](images/concertResults.png)
+#### Liri favorites result:
+![Liri favorites result](images/liriFavorites.png)
+#### Video:
+![Liri favorites result](images/demo.gif)

@@ -115,7 +115,7 @@ function spotifyThis(song){
     });
 }
 function getSearchTerm(command){
-    console.log(command);
+    // console.log(command);
     inquirer.prompt([{
         type: 'input',
         name: 'term',
@@ -123,7 +123,7 @@ function getSearchTerm(command){
     }]).then(answers => {
         // console.log(answers.term);
         let term = answers.term;
-        searchEngine(command, term);
+        searchEngine(command, term.toLowerCase());
     });
 }
 function initPrompt(){
