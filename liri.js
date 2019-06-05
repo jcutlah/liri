@@ -13,14 +13,13 @@ var command;
 // console.log(keys);
 
 function bandsInTown(band){
-    console.log('Looking up concerts for ' + band + '...');
+    console.log('\nLooking up concerts for ' + band + '...\n');
     axios.get('https://rest.bandsintown.com/artists/'+band+'/events?app_id='+bandsKey).then(function (response) {
         // handle success
         // console.log(response.data);
         let shows = response.data;
         // console.log(typeof shows);
-        console.log(`I've found the following upcoming shows for ${band}:`);
-        console.log('');
+        console.log(`I've found the following upcoming shows for ${band}:\n`);
         for (i=0;i<shows.length;i++){
             // console.log(shows[i]);
             let show = shows[i];
@@ -35,7 +34,7 @@ function bandsInTown(band){
         }
         if (shows.length === 0){
             // console.log(response);
-            console.log(`I'm sorry, it looks like there are no upcoming shows for ${band}`);
+            console.log(`I'm sorry, it looks like there are no upcoming shows for ${band}\n`);
         }
         for (var key in response.data){
             // console.log(key);
@@ -49,54 +48,56 @@ function bandsInTown(band){
     });
 }
 function movie(movie){
-    console.log('running movie()');
+    console.log(`\nSearching OMDB for ${movie}...\n`)
     axios.get(`http://www.omdbapi.com/?apikey=${omdbKey}&t=${movie}`).then(function(response){
-        // console.log(response);
         let movieInfo = response.data;
-        console.log(movieInfo.Title);
-        console.log("Year released: " + movieInfo.Year);
-        console.log("     " + movieInfo.Plot);
+        if (movieInfo.Response === 'False'){
+            console.log(`Hmm, I couldn't find anything for ${movie}. Try a different search maybe?\n`);
+        } else {
+            // console.log(movieInfo);
+            console.log(movieInfo.Title);
+            console.log("Year released: " + movieInfo.Year);
+            console.log("     " + movieInfo.Plot);
+        }
     }).catch(function(err){
-        console.log(err);
+        // console.log(err);
+        console.log(`Hmm, I couldn't find anything for ${movie}. Try a different search maybe?\n`);
     }).finally(function(){
         reinitPrompt();
     });
 }
 function randomLiri(){
-    console.log('running randomLiri()');
-    let liriFaveList = fs.readFile('./random.txt', {encoding: 'utf-8'}, (err,data) => {
+    console.log(`\nThank you for indulging me...\n`);
+    fs.readFile('./liriFaves.txt', {encoding: 'utf-8'}, (err,data) => {
         if (err) throw err;
         let liriFaves = data.split(',');
         let randoFave = liriFaves[Math.floor(Math.random() * liriFaves.length)];
-        console.log(randoFave);
         let command = cleanSpaces(randoFave.split(':')[0]);
         let search = cleanSpaces(randoFave.split(':')[1]);
-        console.log(`###${command}###`);
         searchEngine(command, search);
     });
 }
 function cleanSpaces(string){
     let leadingSpace = /^\s+/;
     let trailingSpace = /\s+$/;
-    console.log(`cleaning spaces for ${string}`);
     let cleanString = string.replace(leadingSpace,'').replace(trailingSpace,'');
-    console.log(cleanString);
     return cleanString;
 }
 function spotifyThis(song){
-    console.log('Searching Spotify for ' + song + '...');
+    console.log('Searching Spotify for ' + song + '...\n');
     var spotify = new Spotify(keys.spotify);
+    let limit = 5
     spotify.search({ 
         type: 'track', 
         query: song,
-        limit: 5
+        limit
     }).then(function(response) {
         var songs = response.tracks.items;
         // console.log(songs);
         if (songs.length <= 4){
-            console.log("I found " + songs.length + " potential matches for '"+song+"'.")
+            console.log("I found " + songs.length + " potential matches for '"+song+"'.\n")
         } else {
-            console.log("Here are the first 20 matches I found for that search.")
+            console.log(`Here are the first ${limit} matches I found for that search.`)
         }
         for(i=0;i<songs.length;i++){
             console.log(' ');
@@ -147,8 +148,12 @@ function initPrompt(){
                     value: 'movie'
                 },
                 {
-                    name: "Do what Liri wants.",
+                    name: "Look up one of Liri's favorites.",
                     value: 'random'
+                },
+                {
+                    name: "Nevermind, I'm all set for now.",
+                    value: 'nothing'
                 }
             ]
         }
@@ -157,6 +162,8 @@ function initPrompt(){
         command = answers.command;
         if (command === "random"){
             randomLiri();
+        } else if (command === "nothing"){
+            console.log("Very well. Thank you for your consideration.")
         } else {
             getSearchTerm(command);
         }
@@ -168,10 +175,19 @@ function reinitPrompt(){
     console.log('');
     inquirer.prompt([
         {
-            type: 'confirm',
+            type: 'list',
             name: 'reinit',
             message: 'Anything else you\'d like to search for?',
-            
+            choices: [
+                {
+                    name: "Yes",
+                    value: true
+                },
+                {
+                    name: "No",
+                    value: false
+                }
+            ]
         }
     ]).then(answers => {
         if (answers.reinit){
